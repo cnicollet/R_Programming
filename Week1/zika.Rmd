@@ -1,0 +1,50 @@
+Zika data set
+=============
+
+### Loading the data and looking for the its structure:
+```{r echo=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+zika_file <- paste0("https://raw.githubusercontent.com/cdcepi/zika/master/Brazil/COES_Microcephaly/data/COES_Microcephaly-2016-06-25.csv")
+zika_brazil <- read_csv(zika_file, col_types = "cccccccic")
+
+glimpse(zika_brazil)
+```
+
+### Total values of cases in different locations in Brazil:
+
+```{r echo=FALSE, fig.width=10}
+zika_brazil %>%
+  select(location, value, unit, data_field) %>%
+  ggplot(aes(location, value, fill = data_field)) + geom_bar(stat = "identity") + coord_flip() + ggtitle("Total cases in each location")
+```
+
+### Total confirmed cases in each location:
+
+```{r echo=FALSE, fig.width=10}
+zika_brazil %>%
+  filter(data_field %in% c("microcephaly_confirmed", "microcephaly_fatal_confirmed")) %>%
+  select(location, value, unit, data_field) %>%
+  ggplot(aes(location, value, fill = data_field)) + geom_bar(stat = "identity") + coord_flip() + ggtitle("Total confirmed cases in each location")
+```
+
+### Percentage of differents cases:
+
+```{r echo=FALSE}
+d <- zika_brazil %>%
+  group_by(data_field) %>%
+  summarize(sum_val = sum(value, na.rm = T)) %>%
+  mutate(prop_val = prop.table(sum_val)) %>%
+  mutate(percent_val = prop_val * 100)
+d
+ggplot(d, aes(data_field, percent_val, fill = prop_val)) + geom_bar(stat = "identity") + coord_flip() + xlab("cases percent(%)") + ggtitle("Percentage of different cases")
+```
+
+
+
+
+
+
+
