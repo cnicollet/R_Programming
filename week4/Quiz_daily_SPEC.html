@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Working with large dataset</title>
+
+<script src="Quiz_daily_SPEC_files/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="Quiz_daily_SPEC_files/bootstrap-3.3.5/css/cerulean.min.css" rel="stylesheet" />
+<script src="Quiz_daily_SPEC_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="Quiz_daily_SPEC_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="Quiz_daily_SPEC_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="lab.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="Quiz_daily_SPEC_files/navigation-1.1/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Working with large dataset</h1>
+
+</div>
+
+
+<div id="loading-the-data-set-and-looking-at-the-data" class="section level4">
+<h4>Loading the data set and looking at the data:</h4>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(readr)
+<span class="kw">library</span>(dplyr)
+
+chemical &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="st">&quot;data/daily_SPEC_2014.csv.bz2&quot;</span>, <span class="dt">col_types =</span> <span class="st">&quot;cccciddcccccccidddicccccccccc&quot;</span>,<span class="dt">progress =</span> F)
+
+<span class="kw">names</span>(chemical) &lt;-<span class="st"> </span><span class="kw">make.names</span>(<span class="kw">names</span>(chemical))
+
+chemical &lt;-<span class="st"> </span><span class="kw">rename</span>(chemical, <span class="dt">Site.Number =</span> Site.Num)
+chemical$Date.Local &lt;-<span class="st"> </span><span class="kw">as.Date</span>(chemical$Date.Local)
+
+<span class="kw">glimpse</span>(chemical)</code></pre>
+<pre><code>## Observations: 2,108,467
+## Variables: 29
+## $ State.Code          &lt;chr&gt; &quot;01&quot;, &quot;01&quot;, &quot;01&quot;, &quot;01&quot;, &quot;01&quot;, &quot;01&quot;, &quot;01&quot;, ...
+## $ County.Code         &lt;chr&gt; &quot;003&quot;, &quot;003&quot;, &quot;003&quot;, &quot;003&quot;, &quot;003&quot;, &quot;003&quot;, ...
+## $ Site.Number         &lt;chr&gt; &quot;0010&quot;, &quot;0010&quot;, &quot;0010&quot;, &quot;0010&quot;, &quot;0010&quot;, &quot;0...
+## $ Parameter.Code      &lt;chr&gt; &quot;68105&quot;, &quot;68105&quot;, &quot;68105&quot;, &quot;68105&quot;, &quot;68105...
+## $ POC                 &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+## $ Latitude            &lt;dbl&gt; 30.498, 30.498, 30.498, 30.498, 30.498, 30...
+## $ Longitude           &lt;dbl&gt; -87.88141, -87.88141, -87.88141, -87.88141...
+## $ Datum               &lt;chr&gt; &quot;NAD83&quot;, &quot;NAD83&quot;, &quot;NAD83&quot;, &quot;NAD83&quot;, &quot;NAD83...
+## $ Parameter.Name      &lt;chr&gt; &quot;Ambient Temperature&quot;, &quot;Ambient Temperatur...
+## $ Sample.Duration     &lt;chr&gt; &quot;24 HOUR&quot;, &quot;24 HOUR&quot;, &quot;24 HOUR&quot;, &quot;24 HOUR&quot;...
+## $ Pollutant.Standard  &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA...
+## $ Date.Local          &lt;date&gt; 2014-01-02, 2014-01-05, 2014-01-08, 2014-...
+## $ Units.of.Measure    &lt;chr&gt; &quot;Degrees Centigrade&quot;, &quot;Degrees Centigrade&quot;...
+## $ Event.Type          &lt;chr&gt; &quot;None&quot;, &quot;None&quot;, &quot;None&quot;, &quot;None&quot;, &quot;None&quot;, &quot;N...
+## $ Observation.Count   &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+## $ Observation.Percent &lt;dbl&gt; 100, 100, 100, 100, 100, 100, 100, 100, 10...
+## $ Arithmetic.Mean     &lt;dbl&gt; 10.9, 14.1, 0.7, 17.9, 12.7, 11.0, 9.1, 6....
+## $ X1st.Max.Value      &lt;dbl&gt; 10.9, 14.1, 0.7, 17.9, 12.7, 11.0, 9.1, 6....
+## $ X1st.Max.Hour       &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...
+## $ AQI                 &lt;chr&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA...
+## $ Method.Code         &lt;chr&gt; &quot;118&quot;, &quot;118&quot;, &quot;118&quot;, &quot;118&quot;, &quot;118&quot;, &quot;118&quot;, ...
+## $ Method.Name         &lt;chr&gt; &quot;R &amp; P Model 2025 PM2.5 Sequent - Electron...
+## $ Local.Site.Name     &lt;chr&gt; &quot;FAIRHOPE, Alabama&quot;, &quot;FAIRHOPE, Alabama&quot;, ...
+## $ Address             &lt;chr&gt; &quot;FAIRHOPE HIGH SCHOOL, FAIRHOPE,  ALABAMA&quot;...
+## $ State.Name          &lt;chr&gt; &quot;Alabama&quot;, &quot;Alabama&quot;, &quot;Alabama&quot;, &quot;Alabama&quot;...
+## $ County.Name         &lt;chr&gt; &quot;Baldwin&quot;, &quot;Baldwin&quot;, &quot;Baldwin&quot;, &quot;Baldwin&quot;...
+## $ City.Name           &lt;chr&gt; &quot;Fairhope&quot;, &quot;Fairhope&quot;, &quot;Fairhope&quot;, &quot;Fairh...
+## $ CBSA.Name           &lt;chr&gt; &quot;Daphne-Fairhope-Foley, AL&quot;, &quot;Daphne-Fairh...
+## $ Date.of.Last.Change &lt;chr&gt; &quot;2015-02-02&quot;, &quot;2015-02-02&quot;, &quot;2015-02-02&quot;, ...</code></pre>
+</div>
+<div id="what-is-average-sample.value-for-bromine-pm2.5-lc-in-the-state-of-wisconsin-in-this-dataset" class="section level4">
+<h4>1. What is average Sample.Value for “Bromine PM2.5 LC” in the state of Wisconsin in this dataset?</h4>
+<pre class="sourceCode r"><code class="sourceCode r">chemical %&gt;%
+<span class="st">  </span><span class="kw">filter</span>(Parameter.Name ==<span class="st"> &quot;Bromine PM2.5 LC&quot;</span> &amp;<span class="st"> </span>State.Name ==<span class="st"> &quot;Wisconsin&quot;</span>) %&gt;%
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">avg_Bromine =</span> <span class="kw">mean</span>(Arithmetic.Mean, <span class="dt">na.rm =</span> T)) </code></pre>
+<pre><code>## # A tibble: 1 × 1
+##   avg_Bromine
+##         &lt;dbl&gt;
+## 1 0.003960482</code></pre>
+</div>
+<div id="calculate-the-average-of-each-chemical-constituent-across-all-statesmonitors-and-all-time-points.-which-constituent-has-the-highest-average-level" class="section level4">
+<h4>2. Calculate the average of each chemical constituent across all states/monitors and all time points. Which constituent has the highest average level?</h4>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(ggplot2)</code></pre>
+<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 3.3.2</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">chemical %&gt;%
+<span class="st">  </span><span class="kw">filter</span>(<span class="kw">grepl</span>(<span class="st">&quot;PM2.5&quot;</span>, Parameter.Name)) %&gt;%
+<span class="st">  </span><span class="kw">group_by</span>(Parameter.Name) %&gt;%
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">avg_Chemical =</span> <span class="kw">mean</span>(Arithmetic.Mean, <span class="dt">na.rm =</span> T)) %&gt;%
+<span class="st">  </span><span class="kw">arrange</span>(<span class="kw">desc</span>(avg_Chemical)) %&gt;%
+<span class="st">  </span><span class="kw">head</span>(<span class="dv">5</span>) %&gt;%
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> Parameter.Name, <span class="dt">y =</span> avg_Chemical, <span class="dt">fill =</span> <span class="st">&quot;red&quot;</span>)) +
+<span class="st">  </span><span class="kw">geom_bar</span>(<span class="dt">stat=</span><span class="st">&quot;identity&quot;</span>) +<span class="st"> </span>
+<span class="st">  </span><span class="kw">coord_flip</span>() +<span class="st"> </span>
+<span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;Chemical constituent&quot;</span>) +<span class="st"> </span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Five highest chemicals across all states&quot;</span>)</code></pre>
+<p><img src="Quiz_daily_SPEC_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+</div>
+<div id="another-plot-with-states" class="section level4">
+<h4>Another plot with states:</h4>
+<pre class="sourceCode r"><code class="sourceCode r">chemical %&gt;%
+<span class="st">  </span><span class="kw">filter</span>(<span class="kw">grepl</span>(<span class="st">&quot;PM2.5&quot;</span>, Parameter.Name)) %&gt;%
+<span class="st">  </span><span class="kw">group_by</span>(State.Name, Parameter.Name) %&gt;%
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">avg_Chemical =</span> <span class="kw">mean</span>(Arithmetic.Mean, <span class="dt">na.rm =</span> T)) %&gt;%
+<span class="st">  </span><span class="kw">arrange</span>(<span class="kw">desc</span>(avg_Chemical)) %&gt;%
+<span class="st">  </span><span class="kw">head</span>(<span class="dv">5</span>) %&gt;%
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> Parameter.Name, <span class="dt">y =</span> avg_Chemical, <span class="dt">fill =</span> State.Name)) +<span class="st"> </span>
+<span class="st">  </span><span class="kw">geom_bar</span>(<span class="dt">stat=</span><span class="st">&quot;identity&quot;</span>) +<span class="st"> </span>
+<span class="st">  </span><span class="kw">coord_flip</span>() +<span class="st"> </span>
+<span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;Chemical constituent&quot;</span>) +<span class="st"> </span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Five highest chemicals across all states&quot;</span>)</code></pre>
+<p><img src="Quiz_daily_SPEC_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+</div>
+<div id="which-monitoring-site-has-the-highest-average-level-of-sulfate" class="section level4">
+<h4>3. Which monitoring site has the highest average level of sulfate?</h4>
+<pre><code>## Source: local data frame [358 x 4]
+## Groups: State.Code, County.Code [313]
+## 
+##    State.Code County.Code Site.Number avg_Sulfate
+##         &lt;chr&gt;       &lt;chr&gt;       &lt;chr&gt;       &lt;dbl&gt;
+## 1          39         081        0017    3.182189
+## 2          42         003        0064    3.055483
+## 3          54         039        1005    2.938800
+## 4          18         019        0006    2.738700
+## 5          39         153        0023    2.706449
+## 6          39         035        0060    2.640185
+## 7          39         087        0012    2.638311
+## 8          54         051        1002    2.619043
+## 9          21         111        0067    2.549750
+## 10         18         037        2001    2.516367
+## # ... with 348 more rows</code></pre>
+</div>
+<div id="which-state-has-the-highest-average-of-sulfate" class="section level4">
+<h4>Which state has the highest average of sulfate</h4>
+<p><img src="Quiz_daily_SPEC_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+</div>
+<div id="what-is-the-absolute-difference-in-the-average-levels-of-ec-pm2.5-lc-tor-between-the-states-california-and-arizona-across-all-time-and-all-monitoring-sites" class="section level4">
+<h4>4.What is the absolute difference in the average levels of “EC PM2.5 LC TOR” between the states California and Arizona, across all time and all monitoring sites?</h4>
+<pre><code>## # A tibble: 1 × 1
+##         diff
+##        &lt;dbl&gt;
+## 1 0.01856696</code></pre>
+</div>
+<div id="what-is-the-median-level-of-oc-pm2.5-lc-tor-in-the-western-united-states-across-all-time-define-western-as-any-monitoring-location-that-has-a-longitude-less-than--100." class="section level4">
+<h4>5. What is the median level of “OC PM2.5 LC TOR” in the western United States, across all time? Define western as any monitoring location that has a Longitude LESS THAN -100.</h4>
+<pre><code>## # A tibble: 1 × 1
+##   median
+##    &lt;dbl&gt;
+## 1   0.43</code></pre>
+</div>
+<div id="working-with-another-dataset" class="section level3">
+<h3>WORKING WITH ANOTHER DATASET:</h3>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(readxl)
+data_aqs &lt;-<span class="st"> </span><span class="kw">read_excel</span>(<span class="st">&quot;data/aqs_sites.xlsx&quot;</span>, <span class="dt">col_names =</span> T, <span class="dt">col_types =</span> <span class="kw">c</span>(<span class="st">&quot;text&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;numeric&quot;</span>, <span class="st">&quot;numeric&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;numeric&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;date&quot;</span>, <span class="st">&quot;date&quot;</span>, <span class="st">&quot;blank&quot;</span>, <span class="st">&quot;blank&quot;</span>, <span class="st">&quot;blank&quot;</span>, <span class="st">&quot;blank&quot;</span>, <span class="st">&quot;blank&quot;</span>, <span class="st">&quot;blank&quot;</span>, <span class="st">&quot;numeric&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;numeric&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;text&quot;</span>, <span class="st">&quot;blank&quot;</span>, <span class="st">&quot;blank&quot;</span>, <span class="st">&quot;date&quot;</span>))</code></pre>
+<ul>
+<li>Looking at the data:</li>
+</ul>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">names</span>(data_aqs) &lt;-<span class="st"> </span><span class="kw">make.names</span>(<span class="kw">names</span>(data_aqs))
+<span class="kw">glimpse</span>(data_aqs)</code></pre>
+<pre><code>## Observations: 20,239
+## Variables: 20
+## $ State.Code            &lt;chr&gt; &quot;1&quot;, &quot;1&quot;, &quot;1&quot;, &quot;1&quot;, &quot;1&quot;, &quot;1&quot;, &quot;1&quot;, &quot;1&quot;, ...
+## $ County.Code           &lt;chr&gt; &quot;1&quot;, &quot;1&quot;, &quot;1&quot;, &quot;3&quot;, &quot;3&quot;, &quot;3&quot;, &quot;3&quot;, &quot;5&quot;, ...
+## $ Site.Number           &lt;chr&gt; &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;10&quot;, &quot;1&quot;,...
+## $ Latitude              &lt;dbl&gt; 32.43746, 32.42833, 32.33266, 0.00000, 3...
+## $ Longitude             &lt;dbl&gt; -86.47289, -86.44361, -86.79152, 0.00000...
+## $ Datum                 &lt;chr&gt; &quot;WGS84&quot;, &quot;NAD27&quot;, &quot;WGS84&quot;, &quot;NAD27&quot;, &quot;WGS...
+## $ Elevation             &lt;dbl&gt; 64.00, 0.00, 41.00, 0.00, 0.00, 49.00, 3...
+## $ Land.Use              &lt;chr&gt; &quot;RESIDENTIAL&quot;, &quot;AGRICULTURAL&quot;, &quot;FOREST&quot;,...
+## $ Location.Setting      &lt;chr&gt; &quot;SUBURBAN&quot;, &quot;RURAL&quot;, &quot;RURAL&quot;, &quot;RURAL&quot;, &quot;...
+## $ Site.Established.Date &lt;dttm&gt; 1974-05-01, 1980-01-01, 1989-08-31, 195...
+## $ Site.Closed.Date      &lt;dttm&gt; 1976-12-31, 1982-12-31, 1990-11-30, 195...
+## $ GMT.Offset            &lt;dbl&gt; -6, -6, -6, -6, -6, -6, -6, -6, -6, -6, ...
+## $ Owning.Agency         &lt;chr&gt; &quot;Al Dept Of Env  Mgt&quot;, &quot;Al Dept Of Env  ...
+## $ Local.Site.Name       &lt;chr&gt; NA, NA, NA, NA, NA, NA, &quot;FAIRHOPE, Alaba...
+## $ Address               &lt;chr&gt; &quot;KING ARTHUR TRAILER COURT, PRATTVILLE,A...
+## $ Zip.Code              &lt;dbl&gt; 36067, NA, 36003, NA, 36567, NA, 36532, ...
+## $ State.Name            &lt;chr&gt; &quot;Alabama&quot;, &quot;Alabama&quot;, &quot;Alabama&quot;, &quot;Alabam...
+## $ County.Name           &lt;chr&gt; &quot;Autauga&quot;, &quot;Autauga&quot;, &quot;Autauga&quot;, &quot;Baldwi...
+## $ City.Name             &lt;chr&gt; &quot;Prattville&quot;, &quot;Prattville&quot;, &quot;Not in a Ci...
+## $ Extraction.Date       &lt;dttm&gt; 2016-07-07, 2016-07-07, 2016-07-07, 201...</code></pre>
+<div id="how-many-monitoring-sites-are-labelled-as-both-residential-for-land-use-and-suburban-for-location-setting" class="section level4">
+<h4>6. How many monitoring sites are labelled as both RESIDENTIAL for “Land Use” and SUBURBAN for “Location Setting”?</h4>
+<pre><code>## # A tibble: 1 × 1
+##   n_obs
+##   &lt;int&gt;
+## 1  3527</code></pre>
+</div>
+<div id="what-is-the-median-level-of-ec-pm2.5-lc-tor-amongst-monitoring-sites-that-are-labelled-as-both-residential-and-suburban-in-the-eastern-u.s.-where-eastern-is-defined-as-longitude-greater-than-or-equal-to--100" class="section level4">
+<h4>7. What is the median level of “EC PM2.5 LC TOR” amongst monitoring sites that are labelled as both “RESIDENTIAL” and “SUBURBAN” in the eastern U.S., where eastern is defined as Longitude greater than or equal to -100?</h4>
+<ol style="list-style-type: decimal">
+<li>Subsetting a new data set from data_aqs:</li>
+</ol>
+<pre><code>## # A tibble: 20,239 × 7
+##    State.Code County.Code Site.Number     Land.Use      Location.Setting
+##         &lt;chr&gt;       &lt;chr&gt;       &lt;chr&gt;        &lt;chr&gt;                 &lt;chr&gt;
+## 1           1           1           1  RESIDENTIAL              SUBURBAN
+## 2           1           1           2 AGRICULTURAL                 RURAL
+## 3           1           1           3       FOREST                 RURAL
+## 4           1           3           1      UNKNOWN                 RURAL
+## 5           1           3           2   COMMERCIAL                 RURAL
+## 6           1           3           3   COMMERCIAL URBAN AND CENTER CITY
+## 7           1           3          10   COMMERCIAL              SUBURBAN
+## 8           1           5           1   COMMERCIAL              SUBURBAN
+## 9           1           5           2       FOREST              SUBURBAN
+## 10          1           7           1 AGRICULTURAL                 RURAL
+## # ... with 20,229 more rows, and 2 more variables: Longitude &lt;dbl&gt;,
+## #   Latitude &lt;dbl&gt;</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Subsetting a new data set from chemical:</li>
+</ol>
+<pre><code>## # A tibble: 2,108,467 × 7
+##    State.Code County.Code Site.Number State.Name      Parameter.Name
+##         &lt;chr&gt;       &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;               &lt;chr&gt;
+## 1           1           3          10    Alabama Ambient Temperature
+## 2           1           3          10    Alabama Ambient Temperature
+## 3           1           3          10    Alabama Ambient Temperature
+## 4           1           3          10    Alabama Ambient Temperature
+## 5           1           3          10    Alabama Ambient Temperature
+## 6           1           3          10    Alabama Ambient Temperature
+## 7           1           3          10    Alabama Ambient Temperature
+## 8           1           3          10    Alabama Ambient Temperature
+## 9           1           3          10    Alabama Ambient Temperature
+## 10          1           3          10    Alabama Ambient Temperature
+## # ... with 2,108,457 more rows, and 2 more variables:
+## #   Arithmetic.Mean &lt;dbl&gt;, Date.Local &lt;date&gt;</code></pre>
+<ol start="3" style="list-style-type: decimal">
+<li>Merging the two data sets together:</li>
+</ol>
+<pre><code>## # A tibble: 2,108,467 × 11
+##    State.Code County.Code Site.Number State.Name      Parameter.Name
+##         &lt;chr&gt;       &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;               &lt;chr&gt;
+## 1           1           3          10    Alabama Ambient Temperature
+## 2           1           3          10    Alabama Ambient Temperature
+## 3           1           3          10    Alabama Ambient Temperature
+## 4           1           3          10    Alabama Ambient Temperature
+## 5           1           3          10    Alabama Ambient Temperature
+## 6           1           3          10    Alabama Ambient Temperature
+## 7           1           3          10    Alabama Ambient Temperature
+## 8           1           3          10    Alabama Ambient Temperature
+## 9           1           3          10    Alabama Ambient Temperature
+## 10          1           3          10    Alabama Ambient Temperature
+## # ... with 2,108,457 more rows, and 6 more variables:
+## #   Arithmetic.Mean &lt;dbl&gt;, Date.Local &lt;date&gt;, Land.Use &lt;chr&gt;,
+## #   Location.Setting &lt;chr&gt;, Longitude &lt;dbl&gt;, Latitude &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##   median
+##    &lt;dbl&gt;
+## 1   0.61</code></pre>
+</div>
+<div id="amongst-monitoring-sites-that-are-labeled-as-commercial-for-land-use-which-month-of-the-year-has-the-highest-average-levels-of-sulfate-pm2.5-lc" class="section level4">
+<h4>8. Amongst monitoring sites that are labeled as COMMERCIAL for “Land Use”, which month of the year has the highest average levels of “Sulfate PM2.5 LC”?</h4>
+<ol style="list-style-type: decimal">
+<li>Getting a new data set with a new by adding a new variable Month:</li>
+</ol>
+<pre><code>## # A tibble: 2,108,467 × 8
+##    State.Code County.Code Site.Number State.Name      Parameter.Name
+##         &lt;chr&gt;       &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;               &lt;chr&gt;
+## 1           1           3          10    Alabama Ambient Temperature
+## 2           1           3          10    Alabama Ambient Temperature
+## 3           1           3          10    Alabama Ambient Temperature
+## 4           1           3          10    Alabama Ambient Temperature
+## 5           1           3          10    Alabama Ambient Temperature
+## 6           1           3          10    Alabama Ambient Temperature
+## 7           1           3          10    Alabama Ambient Temperature
+## 8           1           3          10    Alabama Ambient Temperature
+## 9           1           3          10    Alabama Ambient Temperature
+## 10          1           3          10    Alabama Ambient Temperature
+## # ... with 2,108,457 more rows, and 3 more variables:
+## #   Arithmetic.Mean &lt;dbl&gt;, Date.Local &lt;date&gt;, Month &lt;chr&gt;</code></pre>
+<ol start="2" style="list-style-type: decimal">
+<li>Merging with the data set df_aqs:</li>
+</ol>
+<p><img src="Quiz_daily_SPEC_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+</div>
+<div id="pie-charts" class="section level4">
+<h4>Pie charts</h4>
+<p><img src="Quiz_daily_SPEC_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+</div>
+<div id="how-many-days-is-the-sum-of-sulfate-pm2.5-lc-and-total-nitrate-pm2.5-lc-greater-than-10-at-monitoring-site-state-6-county-65-and-site-8001" class="section level4">
+<h4>9. How many days is the sum of “Sulfate PM2.5 LC” and “Total Nitrate PM2.5 LC” greater than 10, at monitoring site State 6, County 65, and Site 8001?</h4>
+<pre><code>## [1] 11</code></pre>
+</div>
+<div id="which-monitoring-site-has-the-highest-correlation-between-sulfate-pm2.5-lc-and-total-nitrate-pm2.5-lc-across-all-dates" class="section level4">
+<h4>10. Which monitoring site has the highest correlation between “Sulfate PM2.5 LC” and “Total Nitrate PM2.5 LC” across all dates?</h4>
+<pre><code>## Source: local data frame [1 x 4]
+## Groups: State.Code, County.Code [1]
+## 
+##   State.Code County.Code Site.Number       cor
+##        &lt;chr&gt;       &lt;chr&gt;       &lt;chr&gt;     &lt;dbl&gt;
+## 1          2          90          35 0.8978038</code></pre>
+</div>
+</div>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

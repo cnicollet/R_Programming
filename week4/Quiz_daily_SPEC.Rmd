@@ -1,0 +1,240 @@
+---
+title: "Working with large dataset"
+output:
+  html_document:
+    self_contained: no
+    theme: cerulean 
+    highlight: pygments
+    css: lab.css
+---
+
+#### Loading the data set and looking at the data:
+
+
+```{r load packges, message=F}
+library(readr)
+library(dplyr)
+
+chemical <- read_csv("data/daily_SPEC_2014.csv.bz2", col_types = "cccciddcccccccidddicccccccccc",progress = F)
+
+names(chemical) <- make.names(names(chemical))
+
+chemical <- rename(chemical, Site.Number = Site.Num)
+chemical$Date.Local <- as.Date(chemical$Date.Local)
+
+glimpse(chemical)
+```
+
+#### 1. What is average Sample.Value for “Bromine PM2.5 LC” in the state of Wisconsin in this dataset?
+
+
+```{r echo=T}
+chemical %>%
+  filter(Parameter.Name == "Bromine PM2.5 LC" & State.Name == "Wisconsin") %>%
+  summarize(avg_Bromine = mean(Arithmetic.Mean, na.rm = T)) 
+```
+
+#### 2. Calculate the average of each chemical constituent across all states/monitors and all time points. Which constituent has the highest average level?
+
+
+```{r echo=F, message=FALSE}
+library(ggplot2)
+chemical %>%
+  filter(grepl("PM2.5", Parameter.Name)) %>%
+  group_by(Parameter.Name) %>%
+  summarize(avg_Chemical = mean(Arithmetic.Mean, na.rm = T)) %>%
+  arrange(desc(avg_Chemical)) %>%
+  head(5) %>%
+  ggplot(aes(x = Parameter.Name, y = avg_Chemical, fill = "red"))+   geom_bar(stat="identity") + 
+  coord_flip() + 
+  xlab("Chemical constituent") + 
+  ggtitle("Five highest chemicals across all states")
+```
+
+#### Another plot with states:
+
+
+```{r echo=T}
+chemical %>%
+  filter(grepl("PM2.5", Parameter.Name)) %>%
+  group_by(State.Name, Parameter.Name) %>%
+  summarize(avg_Chemical = mean(Arithmetic.Mean, na.rm = T)) %>%
+  arrange(desc(avg_Chemical)) %>%
+  head(5) %>%
+  ggplot(aes(x = Parameter.Name, y = avg_Chemical, fill = State.Name)) + 
+  geom_bar(stat="identity") + 
+  coord_flip() + 
+  xlab("Chemical constituent") + 
+  ggtitle("Five highest chemicals across all states")
+```
+
+####3. Which monitoring site has the highest average level of sulfate?
+
+
+```{r echo=F}
+chemical %>%
+  filter(Parameter.Name == "Sulfate PM2.5 LC") %>%
+  group_by(State.Code, County.Code, Site.Number) %>%
+  summarize(avg_Sulfate = mean(Arithmetic.Mean, na.rm = T)) %>%
+  arrange(desc(avg_Sulfate)) %>%
+  head(1)
+```
+
+#### Which state has the highest average of sulfate
+
+
+```{r echo=F, fig.height=10}
+chemical %>%
+  filter(Parameter.Name == "Sulfate PM2.5 LC") %>%
+  group_by(State.Name) %>%
+  summarize(avg_Sulfate = mean(Arithmetic.Mean, na.rm = T)) %>%
+  arrange(desc(avg_Sulfate)) %>%
+  ggplot(aes(State.Name, avg_Sulfate, fill = avg_Sulfate)) + geom_bar(stat = "identity") + 
+  coord_flip() + 
+  coord_flip() + 
+  xlab("State name") + 
+  ylab("avg_sulfate") + 
+  ggtitle("Average level of Sulfate across all states")
+```
+
+####4.What is the absolute difference in the average levels of “EC PM2.5 LC TOR” between the states California and Arizona, across all time and all monitoring sites?
+
+
+```{r echo=T}
+library(tidyr)
+chemical %>%
+  filter(Parameter.Name == "EC PM2.5 LC TOR" & State.Name %in% c("California", "Arizona")) %>%
+  group_by(State.Name) %>%
+  summarize(avg = mean(Arithmetic.Mean, na.rm = T)) %>%
+  spread(State.Name, avg) %>%
+  summarize(diff  = California - Arizona)
+```
+
+####5. What is the median level of “OC PM2.5 LC TOR” in the western United States, across all time? Define western as any monitoring location that has a Longitude LESS THAN -100. 
+
+
+```{r echo=T}
+chemical %>%
+  filter(Parameter.Name == "OC PM2.5 LC TOR" & Longitude < -100) %>%
+  summarize(median = median(Arithmetic.Mean, na.rm = T))
+```
+
+### WORKING WITH ANOTHER DATASET:
+
+
+```{r echo=FALSE, message=FALSE}
+library(readxl)
+data_aqs <- read_excel("data/aqs_sites.xlsx", col_names = T, col_types = c("text", "text", "text", "numeric", "numeric", "text", "numeric", "text", "text", "date", "date", "blank", "blank", "blank", "blank", "blank", "blank", "numeric", "text", "text", "text", "numeric", "text", "text", "text", "blank", "blank", "date"))
+names(data_aqs) <- make.names(names(data_aqs))
+```
+
+* Looking at the data:
+```{r}
+glimpse(data_aqs)
+```
+
+####6. How many monitoring sites are labelled as both RESIDENTIAL for "Land Use" and SUBURBAN for "Location Setting"?
+
+
+```{r echo=FALSE}
+data_aqs %>%
+  filter(Land.Use == "RESIDENTIAL" & Location.Setting == "SUBURBAN") %>%
+  summarize(n_obs = n())
+```
+
+####7. What is the median level of “EC PM2.5 LC TOR” amongst monitoring sites that are labelled as both “RESIDENTIAL” and “SUBURBAN” in the eastern U.S., where eastern is defined as Longitude greater than or equal to -100?
+
+1. Subsetting a new data set from data_aqs:
+
+```{r echo=FALSE}
+df_aqs <- data_aqs %>%
+  select(State.Code, County.Code, Site.Number, Land.Use, Location.Setting, Longitude, Latitude) 
+
+df_aqs
+```
+
+2. Subsetting a new data set from chemical:
+
+```{r echo=FALSE}
+df_chemical <- chemical %>%
+  select(State.Code, County.Code, Site.Number, State.Name, Parameter.Name, Arithmetic.Mean, Date.Local) %>%
+  mutate(State.Code = as.character(as.double(State.Code)), County.Code = as.character(as.double(County.Code)), Site.Number = as.character(as.double(Site.Number)))
+
+df_chemical
+```
+
+3. Merging the two data sets together:
+
+```{r echo=FALSE}
+chem_aqs <- left_join(df_chemical, df_aqs, by = c("State.Code", "County.Code", "Site.Number"))
+chem_aqs
+
+chem_aqs %>%
+  filter(Longitude >= -100 & Parameter.Name == "EC PM2.5 LC TOR" & Land.Use == "RESIDENTIAL" & Location.Setting == "SUBURBAN") %>%
+  summarize(median = median(Arithmetic.Mean, na.rm = T))
+```
+
+####8. Amongst monitoring sites that are labeled as COMMERCIAL for “Land Use”, which month of the year has the highest average levels of “Sulfate PM2.5 LC”?  
+
+1. Getting a new data set with a new by adding a new variable Month:
+
+```{r echo=FALSE}
+df_chem_month <- df_chemical %>%
+  select(State.Code, County.Code, Site.Number, State.Name, Parameter.Name, Arithmetic.Mean, Date.Local) %>%
+  mutate(Month = format(Date.Local, "%m"))
+df_chem_month
+```
+
+2. Merging with the data set df_aqs: 
+
+```{r echo=FALSE}
+chem_aqs_month <- left_join(df_chem_month, df_aqs, by = c("State.Code", "County.Code", "Site.Number"))
+
+c <- chem_aqs_month %>%
+  filter(Land.Use == "COMMERCIAL" & Parameter.Name == "Sulfate PM2.5 LC") %>%
+  group_by(Month) %>%
+  summarize(avg_Sulfate = mean(Arithmetic.Mean, na.rm = T) ) %>%
+  arrange(desc(avg_Sulfate)) 
+ggplot(c, aes(Month, avg_Sulfate, fill = avg_Sulfate)) + geom_bar(stat = "identity", width = 0.8) + 
+  xlab("Month") + ylab("avg_sulfate") + ggtitle("Average levels of “Sulfate PM2.5 LC” for each month")
+```
+
+#### Pie charts
+
+```{r echo=FALSE}
+ggplot(c, aes(x = "", y = avg_Sulfate, fill = Month)) +
+    geom_bar(width = 1, stat = "identity") +
+    ##scale_fill_manual(Month = c("red", "yellow", "green", "black", "white", "blue", "gray", "ruby", "orange", "purple", "lightble", "dark")) +
+    coord_polar("y", start = pi / 2) +
+    labs(title = "Pac man")
+```
+
+####9. How many days is the sum of “Sulfate PM2.5 LC” and “Total Nitrate PM2.5 LC” greater than 10, at monitoring site State 6, County 65, and Site 8001?
+
+
+```{r echo=FALSE}
+chem_aqs %>%
+  filter(Parameter.Name %in% c("Sulfate PM2.5 LC", "Total Nitrate PM2.5 LC") & State.Code == "6" & County.Code == "65" & Site.Number == 8001) %>%
+  group_by(Parameter.Name, Date.Local) %>%
+  select(Parameter.Name, Date.Local, Arithmetic.Mean) %>%
+  summarize(mean_S_N = mean(Arithmetic.Mean, na.rm = T)) %>%
+  group_by(Date.Local) %>%
+  summarize(sum_S_N = sum(mean_S_N)) %>%
+  filter(sum_S_N > 10) %>%
+  nrow
+```
+
+####10. Which monitoring site has the highest correlation between “Sulfate PM2.5 LC” and “Total Nitrate PM2.5 LC” across all dates?
+
+
+```{r echo=FALSE}
+chem_aqs %>%
+  filter(Parameter.Name %in% c("Sulfate PM2.5 LC", "Total Nitrate PM2.5 LC")) %>%
+  group_by(State.Code, County.Code, Site.Number, Parameter.Name, Date.Local) %>%
+  summarize(mean = mean(Arithmetic.Mean, na.rm = T)) %>%
+  spread(Parameter.Name, mean) %>% 
+  summarize(cor = cor(`Sulfate PM2.5 LC`, `Total Nitrate PM2.5 LC`)) %>%
+  arrange(desc(cor)) %>%
+  head(1)
+```
+
